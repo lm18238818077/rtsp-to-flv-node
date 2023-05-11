@@ -33,7 +33,7 @@ function createServer() {
  * @param req
  */
 function rtspToFlvHandle(ws, req) {
-    let WAITTIME = 8
+    let WAITTIME = 3
     let duration = 0
     let t = null
     let command = null
@@ -50,20 +50,20 @@ function rtspToFlvHandle(ws, req) {
         }
         duration = 0
     }
-    const url = new Buffer(req.query.url, "base64").toString();
+    const url = req.query.url
         command = ffmpeg(url)
         .on("start", (commandLine) => {
             // commandLine 是完整的ffmpeg命令
             console.log(commandLine, "转码 开始");
+        })
+        .on("codecData", function (data) {
+            console.log(data, "转码中......");
             t = setInterval(() => {
                 duration += 1
                 if(duration > WAITTIME) {
                     closed(true)
                 }
             }, 1000)
-        })
-        .on("codecData", function (data) {
-            console.log(data, "转码中......");
         })
         .on("progress", function (progress) {
             duration = 0
