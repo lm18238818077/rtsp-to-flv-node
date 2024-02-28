@@ -1,10 +1,15 @@
 const ffmpegPath = require("@ffmpeg-installer/ffmpeg"); // 自动为当前node服务所在的系统安装ffmpeg
 const ffmpeg = require("fluent-ffmpeg");
 const express = require("express");
+const path = require("path");
 const webSocketStream = require("websocket-stream/stream");
 const expressWebSocket = require("express-ws");
+const ConsoleWindow = require("node-hide-console-window");
+
 
 ffmpeg.setFfmpegPath(ffmpegPath.path);
+
+const requestConf = require(path.join(process.cwd(), 'conf.js'));
 
 /**
  * 创建一个后端服务
@@ -22,8 +27,10 @@ function createServer() {
         response.send("当你看到这个页面的时候说明rtsp流媒体服务正常启动中......");
     });
 
-    app.listen(8100, () => {
-        console.log("转换rtsp流媒体服务启动了，服务端口号为8100");
+    app.listen(requestConf.port, () => {
+        console.log(`转换rtsp流媒体服务启动了，服务端口号为${requestConf.port}`);
+        //To hide your console just call:
+        ConsoleWindow.hideConsole();
     });
 }
 
