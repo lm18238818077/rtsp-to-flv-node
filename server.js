@@ -4,7 +4,6 @@ const express = require("express");
 const path = require("path");
 const webSocketStream = require("websocket-stream/stream");
 const expressWebSocket = require("express-ws");
-const ConsoleWindow = require("node-hide-console-window");
 
 
 ffmpeg.setFfmpegPath(ffmpegPath.path);
@@ -28,9 +27,7 @@ function createServer() {
     });
 
     app.listen(requestConf.port, () => {
-        console.log(`转换rtsp流媒体服务启动了，服务端口号为${requestConf.port}`);
-        //To hide your console just call:
-        ConsoleWindow.hideConsole();
+        // console.log(`转换rtsp流媒体服务启动了，服务端口号为${requestConf.port}`);
     });
 }
 
@@ -52,7 +49,6 @@ function rtspToFlvHandle(ws, req) {
             command._events.close[0]()
         }
         if(t) {
-            console.log('已清除')
             clearInterval(t)
         }
         duration = 0
@@ -61,10 +57,8 @@ function rtspToFlvHandle(ws, req) {
         command = ffmpeg(url)
         .on("start", (commandLine) => {
             // commandLine 是完整的ffmpeg命令
-            console.log(commandLine, "转码 开始");
         })
         .on("codecData", function (data) {
-            console.log(data, "转码中......");
             t = setInterval(() => {
                 duration += 1
                 if(duration > WAITTIME) {
@@ -74,15 +68,12 @@ function rtspToFlvHandle(ws, req) {
         })
         .on("progress", function (progress) {
             duration = 0
-            console.log(progress, "转码进度");
         })
         .on("error", function (err) {
             closed()
-            console.log(url, "转码 错误: ", err);
         })
         .on("end", function () {
             closed()
-            console.log(url, "转码 结束!");
         })
         .addOutputOption(
             "-threads",
