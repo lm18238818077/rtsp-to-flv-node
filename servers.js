@@ -2,6 +2,8 @@ const ffmpegPath = require("@ffmpeg-installer/ffmpeg"); // 自动为当前node�
 const ffmpeg = require("fluent-ffmpeg");
 const express = require("express");
 const path = require("path");
+const https = require('https');
+const fs = require('fs')
 const webSocketStream = require("websocket-stream/stream");
 const expressWebSocket = require("express-ws");
 
@@ -16,18 +18,21 @@ const requestConf = require(path.join(process.cwd(), 'conf.js'));
 function createServer() {
     const app = express();
     app.use(express.static(__dirname));
-    expressWebSocket(app, null, {
-        perMessageDeflate: true,
-    });
+    const options = {
+        key: fs.readFileSync(path.join(__dirname, "privatekey.pem")),
+        cert: fs.readFileSync(path.join(__dirname, "certificate.pem")),
+    };
+    const server = https.createServer(options, app);
+    expressWebSocket(app, server);
     app.ws("/video/", rtspToFlvHandle);
-
     app.get("/", (req, response) => {
         response.send("当你看到这个页面的时候说明rtsp流媒体服务正常启动中......");
     });
-
-    app.listen(requestConf.port, () => {
+    server.listen(requestConf.port, () => {
         console.log(`转换rtsp流媒体服务启动了，服务端口号为${requestConf.port}`);
     });
+
+    
 }
 
 /**
@@ -36,7 +41,7 @@ function createServer() {
  * @param req
  */
 function rtspToFlvHandle(ws, req) {
-    let WAITTIME = 3
+    let WAITTIME = 30
     let duration = 0
     let t = null
     let command = null
@@ -54,10 +59,12 @@ function rtspToFlvHandle(ws, req) {
     }
     const url = req.query.url
         command = ffmpeg(url)
-        .on("start", (commandLine) => {
+            .on("start", (commandLine) => {
+                console.log(commandLine, 'commandLine')
             // commandLine 是完整的ffmpeg命令
         })
         .on("codecData", function (data) {
+            console.log(data, 'data')
             t = setInterval(() => {
                 duration += 1
                 if(duration > WAITTIME) {
@@ -68,7 +75,8 @@ function rtspToFlvHandle(ws, req) {
         .on("progress", function (progress) {
             duration = 0
         })
-        .on("error", function (err) {
+            .on("error", function (err) {
+            console.log(err)
             closed()
         })
         .on("end", function () {
