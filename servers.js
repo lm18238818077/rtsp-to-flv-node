@@ -19,8 +19,8 @@ function createServer() {
     const app = express();
     app.use(express.static(__dirname));
     const options = {
-        key: fs.readFileSync(path.join(__dirname, "privatekey.pem")),
-        cert: fs.readFileSync(path.join(__dirname, "certificate.pem")),
+        key: fs.readFileSync(path.join(__dirname, "221-204-213-61.key")),
+        cert: fs.readFileSync(path.join(__dirname, "221-204-213-61.crt")),
     };
     const server = https.createServer(options, app);
     expressWebSocket(app, server);
